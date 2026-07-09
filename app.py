@@ -25,123 +25,131 @@ st.set_page_config(
 )
 
 # --------------------------------------------------------------------------
-# Design system — SCADA night-ops instrument panel
+# Design system — dark control-room, modern grotesque type
 # --------------------------------------------------------------------------
 
 TAG_COLORS = {
     "contracts": "#FF6B1A",   # blade-tip signal orange
     "patents":   "#4FC3C7",   # instrument teal
+    "papers":    "#B48DF2",   # journal violet
     "tech":      "#8FD14F",   # status green
     "markets":   "#D9B26A",   # ledger sand
-    "news":      "#8593A2",   # neutral
+    "news":      "#8A97A8",   # neutral
 }
 
 CSS = """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
 
 :root {
-  --bg: #0B0E12; --panel: #12171E; --panel2: #161C24; --line: #222B36;
-  --ink: #E7ECF1; --muted: #8593A2; --dim: #5A6774;
-  --orange: #FF6B1A; --teal: #4FC3C7; --green: #8FD14F; --sand: #D9B26A;
-  --mono: 'IBM Plex Mono', monospace;
-  --sans: 'IBM Plex Sans', sans-serif;
-  --cond: 'IBM Plex Sans Condensed', sans-serif;
+  --bg: #0B0E12; --panel: #12171E; --panel2: #171E27; --line: #232B36;
+  --ink: #E9EDF2; --muted: #93A0AF; --dim: #5E6B79;
+  --orange: #FF6B1A;
+  --body: 'Inter', system-ui, sans-serif;
+  --disp: 'Space Grotesk', 'Inter', sans-serif;
 }
 
-.stApp { background: var(--bg);
-  background-image: linear-gradient(var(--line) 1px, transparent 1px),
-                    linear-gradient(90deg, var(--line) 1px, transparent 1px);
-  background-size: 48px 48px; background-attachment: fixed;
-  background-position: -1px -1px; }
+.stApp { background: var(--bg); }
 .stApp::before { content:""; position:fixed; inset:0; pointer-events:none;
-  background: radial-gradient(ellipse at 50% -10%, rgba(255,107,26,.06), transparent 55%); }
+  background: radial-gradient(ellipse at 50% -12%, rgba(255,107,26,.07), transparent 55%); }
 
-html, body, [class*="css"] { font-family: var(--sans); color: var(--ink); }
-h1,h2,h3 { font-family: var(--cond); letter-spacing: .02em; }
+html, body, [class*="css"] { font-family: var(--body); color: var(--ink); }
+h1,h2,h3 { font-family: var(--disp); }
 a { color: var(--ink); text-decoration: none; }
 a:hover { color: var(--orange); }
 
 section[data-testid="stSidebar"] { background: var(--panel); border-right: 1px solid var(--line); }
-section[data-testid="stSidebar"] * { font-family: var(--mono); font-size: 13px; }
+section[data-testid="stSidebar"] * { font-family: var(--body); font-size: 13.5px; }
 
 /* ---------- masthead ---------- */
-.ww-mast { display:flex; align-items:center; gap:18px; padding: 6px 0 14px;
+.ww-mast { display:flex; align-items:center; gap:18px; padding: 8px 0 16px;
   border-bottom: 2px solid var(--orange); margin-bottom: 4px; }
-.ww-rotor { width:54px; height:54px; flex:none; }
-.ww-rotor svg { animation: ww-spin 9s linear infinite; transform-origin: 50% 50%; }
+.ww-rotor { width:56px; height:56px; flex:none; }
+.ww-rotor svg { animation: ww-spin 10s linear infinite; transform-origin: 50% 50%; }
 @media (prefers-reduced-motion: reduce) { .ww-rotor svg { animation: none; } }
 @keyframes ww-spin { to { transform: rotate(360deg); } }
-.ww-title { font-family: var(--cond); font-weight:700; font-size: 40px;
-  letter-spacing:.06em; line-height:1; }
+.ww-title { font-family: var(--disp); font-weight:700; font-size: 38px;
+  letter-spacing:.04em; line-height:1; }
 .ww-title span { color: var(--orange); }
-.ww-sub { font-family: var(--mono); font-size:12px; color: var(--muted);
-  letter-spacing:.14em; margin-top:6px; text-transform: uppercase; }
+.ww-sub { font-size:12.5px; font-weight:500; color: var(--muted);
+  letter-spacing:.09em; margin-top:7px; text-transform: uppercase; }
 
-/* ---------- eyebrows / section heads ---------- */
-.ww-eyebrow { font-family: var(--mono); font-size:12px; letter-spacing:.18em;
-  text-transform: uppercase; color: var(--muted); border-bottom:1px solid var(--line);
-  padding: 18px 0 6px; margin-bottom: 2px; display:flex; justify-content:space-between; }
-.ww-eyebrow b { color: var(--ink); font-weight:600; }
-.ww-eyebrow .st { color: var(--dim); letter-spacing:.08em; }
+/* ---------- section heads ---------- */
+.ww-eyebrow { display:flex; justify-content:space-between; align-items:baseline;
+  border-bottom:1px solid var(--line); padding: 20px 0 7px; margin-bottom: 2px; }
+.ww-eyebrow b { font-family: var(--disp); font-weight:600; font-size:17px;
+  letter-spacing:.02em; color: var(--ink);
+  border-left: 3px solid var(--sc, var(--orange)); padding-left: 9px; }
+.ww-eyebrow .st { font-size:11.5px; font-weight:500; letter-spacing:.1em;
+  text-transform:uppercase; color: var(--dim); }
 
 /* ---------- signal board ---------- */
-.ww-board { display:grid; grid-template-columns: repeat(5, 1fr); gap:10px; margin:14px 0 4px; }
+.ww-board { display:grid; grid-template-columns: repeat(6, 1fr); gap:10px; margin:16px 0 4px; }
 .ww-cell { background: var(--panel); border:1px solid var(--line); border-top:2px solid var(--c);
-  padding:10px 12px 8px; }
-.ww-cell .n { font-family: var(--mono); font-size:30px; font-weight:600; color: var(--c); line-height:1; }
-.ww-cell .l { font-family: var(--mono); font-size:10.5px; letter-spacing:.14em;
-  color: var(--muted); text-transform:uppercase; margin-top:6px; }
-@media (max-width: 900px) { .ww-board { grid-template-columns: repeat(2, 1fr); } }
+  padding:11px 13px 9px; }
+.ww-cell .n { font-family: var(--disp); font-size:30px; font-weight:700; color: var(--c);
+  line-height:1; font-variant-numeric: tabular-nums; }
+.ww-cell .l { font-size:10.5px; font-weight:600; letter-spacing:.13em;
+  color: var(--muted); text-transform:uppercase; margin-top:7px; }
+@media (max-width: 1000px) { .ww-board { grid-template-columns: repeat(3, 1fr); } }
 
 /* ---------- event log rows ---------- */
 .ww-log { border:1px solid var(--line); background: var(--panel); margin-bottom: 6px; }
-.ww-row { display:flex; gap:14px; padding:10px 14px 10px 10px;
-  border-bottom:1px solid var(--line); border-left:3px solid var(--rc, var(--line));
-  background: var(--panel); }
+.ww-row { display:flex; gap:14px; padding:11px 14px 11px 10px;
+  border-bottom:1px solid var(--line); border-left:3px solid var(--rc, var(--line)); }
 .ww-row:last-child { border-bottom:none; }
 .ww-row:hover { background: var(--panel2); }
 .ww-row.hit { border-left-color: var(--orange); background: rgba(255,107,26,.05); }
-.ww-t { font-family: var(--mono); font-size:12px; color: var(--dim); flex:none;
-  width:52px; text-align:right; padding-top:3px; }
+.ww-row.old { opacity:.62; }
+.ww-t { font-size:12px; font-weight:500; color: var(--dim); flex:none;
+  width:50px; text-align:right; padding-top:3px; font-variant-numeric: tabular-nums; }
 .ww-row.hit .ww-t { color: var(--orange); }
 .ww-b { min-width:0; }
-.ww-h { font-size:15px; font-weight:600; line-height:1.35; }
-.ww-s { font-size:13px; color: var(--muted); line-height:1.45; margin-top:3px; }
-.ww-m { font-family: var(--mono); font-size:10.5px; letter-spacing:.08em; color: var(--dim);
-  margin-top:6px; display:flex; flex-wrap:wrap; gap:6px 10px; align-items:center; }
-.ww-tag { color: var(--tc); border:1px solid var(--tc); padding:1px 6px; }
-.ww-kw { color: var(--orange); font-weight:600; }
-.ww-co { color: var(--muted); }
+.ww-h { font-size:15px; font-weight:600; line-height:1.4; letter-spacing:-.005em; }
+.ww-s { font-size:13px; color: var(--muted); line-height:1.5; margin-top:3px; }
+.ww-m { font-size:10.5px; font-weight:600; letter-spacing:.09em; text-transform:uppercase;
+  color: var(--dim); margin-top:7px; display:flex; flex-wrap:wrap; gap:6px 12px; align-items:center; }
+.ww-tag { color: var(--tc); border:1px solid var(--tc); padding:1.5px 7px; border-radius:2px; }
+.ww-oldflag { color: #D9B26A; border:1px dashed #D9B26A; padding:1.5px 7px; border-radius:2px; }
+.ww-kw { color: var(--orange); }
+.ww-co { color: var(--muted); text-transform:none; letter-spacing:.02em; }
 
 /* ---------- status LEDs ---------- */
 .ww-led { display:inline-block; width:8px; height:8px; border-radius:50%;
   margin-right:8px; vertical-align:middle; }
-.ww-ok  { background: var(--green); box-shadow:0 0 6px var(--green); }
+.ww-ok  { background: #8FD14F; box-shadow:0 0 6px #8FD14F; }
 .ww-bad { background: var(--orange); box-shadow:0 0 6px var(--orange); }
-.ww-src { font-family: var(--mono); font-size:12.5px; padding:7px 4px;
-  border-bottom:1px solid var(--line); display:flex; gap:10px; align-items:baseline; }
-.ww-src .nm { color: var(--ink); min-width:230px; }
-.ww-src .stt { color: var(--dim); }
+.ww-src { font-size:13px; padding:8px 4px; border-bottom:1px solid var(--line);
+  display:flex; gap:10px; align-items:baseline; }
+.ww-src .nm { color: var(--ink); font-weight:500; min-width:250px; }
+.ww-src .stt { color: var(--dim); font-size:11.5px; letter-spacing:.06em; text-transform:uppercase; }
 
 /* Streamlit widget restyling */
-.stButton button { font-family: var(--mono); letter-spacing:.08em; text-transform: uppercase;
-  background: var(--panel); color: var(--ink); border:1px solid var(--line); border-radius:0; }
+.stButton button { font-family: var(--body); font-weight:600; font-size:12.5px;
+  letter-spacing:.08em; text-transform: uppercase;
+  background: var(--panel); color: var(--ink); border:1px solid var(--line); border-radius:3px; }
 .stButton button:hover { border-color: var(--orange); color: var(--orange); }
-div[data-baseweb="select"], .stTextInput input, .stTextArea textarea {
-  font-family: var(--mono) !important; border-radius:0 !important; }
+div[data-baseweb="select"], .stTextInput input, .stTextArea textarea { border-radius:3px !important; }
 </style>
 """
 
+# Three blades at exact 120° spacing, tapered from hub to tip
 ROTOR_SVG = """
 <div class="ww-rotor"><svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-<g fill="#FF6B1A"><circle cx="50" cy="50" r="6"/>
-<path d="M50 50 L46 14 Q50 6 54 14 Z"/>
-<path d="M50 50 L81 66 Q86 74 77 73 L50 56 Z" transform="rotate(-30 50 50)"/>
-<path d="M50 50 L19 66 Q14 74 23 73 L50 56 Z" transform="rotate(30 50 50)"/></g>
-<circle cx="50" cy="50" r="47" fill="none" stroke="#222B36" stroke-width="2"/>
+<g fill="#FF6B1A">
+<path d="M48.6 46 C46.2 34 46.8 20 50 8.5 C53.2 20 53.8 34 51.4 46 Z"/>
+<path d="M48.6 46 C46.2 34 46.8 20 50 8.5 C53.2 20 53.8 34 51.4 46 Z" transform="rotate(120 50 50)"/>
+<path d="M48.6 46 C46.2 34 46.8 20 50 8.5 C53.2 20 53.8 34 51.4 46 Z" transform="rotate(240 50 50)"/>
+<circle cx="50" cy="50" r="6.5"/>
+</g>
+<circle cx="50" cy="50" r="47" fill="none" stroke="#232B36" stroke-width="2"/>
 </svg></div>
 """
+
+SECTION_ORDER = ["contracts", "patents", "papers", "tech", "markets", "news"]
+MIN_PER_SECTION = 5
+
+WINDOWS = {168: "1 WEEK", 720: "1 MONTH", 8760: "1 YEAR"}
 
 
 def esc(s: str) -> str:
@@ -149,23 +157,33 @@ def esc(s: str) -> str:
 
 
 def primary_tag(item: Item) -> str:
+    if item.source_category == "papers":
+        return "papers"
     for t in ("contracts", "patents", "tech", "markets"):
         if t in item.tags:
             return t
     return item.source_category if item.source_category in TAG_COLORS else "news"
 
 
-def render_rows(items: list[Item], show_source: bool = True) -> str:
+def render_rows(items: list[Item], window_h: int | None = None,
+                show_source: bool = True, show_class: bool = True) -> str:
     if not items:
         return ('<div class="ww-log"><div class="ww-row"><div class="ww-b">'
-                '<div class="ww-s">No items in this window. Widen the time window, '
-                'check the Sources page, or press REFRESH.</div></div></div></div>')
+                '<div class="ww-s">Nothing here yet — check the Sources page for '
+                'offline feeds, or press REFRESH.</div></div></div></div>')
     rows = []
     for it in items:
         tag = primary_tag(it)
         color = TAG_COLORS[tag]
-        hit = " hit" if it.keyword_hits else ""
-        meta = [f'<span class="ww-tag" style="--tc:{color}">{CATEGORIES.get(tag, {"short": tag.upper()})["short"]}</span>']
+        outside = window_h is not None and not within_hours(it, window_h)
+        cls = " hit" if it.keyword_hits else ""
+        cls += " old" if outside else ""
+        meta = []
+        if show_class:
+            meta.append(f'<span class="ww-tag" style="--tc:{color}">'
+                        f'{CATEGORIES.get(tag, {"short": tag.upper()})["short"]}</span>')
+        if outside:
+            meta.append('<span class="ww-oldflag">Older than window</span>')
         if show_source:
             meta.append(f'<span>{esc(it.source_name)}</span>')
         if it.keyword_hits:
@@ -174,7 +192,7 @@ def render_rows(items: list[Item], show_source: bool = True) -> str:
             meta.append('<span class="ww-co">' + esc(" / ".join(it.companies)) + '</span>')
         summary = f'<div class="ww-s">{esc(it.summary)}</div>' if it.summary and it.summary != it.title else ""
         rows.append(
-            f'<div class="ww-row{hit}" style="--rc:{color}">'
+            f'<div class="ww-row{cls}" style="--rc:{color}">'
             f'<div class="ww-t">{rel_time(it.published)}</div>'
             f'<div class="ww-b"><div class="ww-h"><a href="{esc(it.link)}" target="_blank">{esc(it.title)}</a></div>'
             f'{summary}<div class="ww-m">{"".join(meta)}</div></div></div>'
@@ -182,9 +200,9 @@ def render_rows(items: list[Item], show_source: bool = True) -> str:
     return '<div class="ww-log">' + "".join(rows) + "</div>"
 
 
-def eyebrow(label: str, right: str = "") -> None:
-    st.markdown(f'<div class="ww-eyebrow"><b>{esc(label)}</b><span class="st">{esc(right)}</span></div>',
-                unsafe_allow_html=True)
+def eyebrow(label: str, right: str = "", color: str = "#FF6B1A") -> None:
+    st.markdown(f'<div class="ww-eyebrow" style="--sc:{color}"><b>{esc(label)}</b>'
+                f'<span class="st">{esc(right)}</span></div>', unsafe_allow_html=True)
 
 
 # --------------------------------------------------------------------------
@@ -198,12 +216,12 @@ cfg = st.session_state.cfg
 st.markdown(CSS, unsafe_allow_html=True)
 
 with st.sidebar:
-    st.markdown("**WINDWATCH / NAV**")
+    st.markdown("**WINDWATCH**")
     page = st.radio("Page", ["HIGHLIGHTS", "ALL ITEMS", "SOURCES & SETUP"],
                     label_visibility="collapsed")
     st.divider()
-    window = st.selectbox("Time window", [24, 48, 72, 168, 720], index=1,
-                          format_func=lambda h: f"LAST {h} H" if h < 168 else f"LAST {h//24} D")
+    window = st.selectbox("Time window", list(WINDOWS), index=0,
+                          format_func=WINDOWS.get)
     query = st.text_input("Search", placeholder="filter titles + summaries…")
     if st.button("↻  REFRESH FEEDS", use_container_width=True):
         st.cache_data.clear()
@@ -234,48 +252,52 @@ st.markdown(
 # --------------------------------------------------------------------------
 
 if page == "HIGHLIGHTS":
+    # Pool = starred sources only (your composed page); fall back to everything
+    starred = set(cfg["starred"])
+    pool = [i for i in items if i.source_id in starred] if starred else items
+
     # Signal board — 24 h counts by class
-    day = [i for i in items if within_hours(i, 24)]
+    day = [i for i in pool if within_hours(i, 24)]
     counts = {t: 0 for t in TAG_COLORS}
     for i in day:
         counts[primary_tag(i)] += 1
     cells = "".join(
         f'<div class="ww-cell" style="--c:{TAG_COLORS[t]}"><div class="n">{counts[t]:02d}</div>'
-        f'<div class="l">{CATEGORIES[t]["label"]} / 24H</div></div>'
-        for t in ("contracts", "patents", "tech", "markets", "news")
+        f'<div class="l">{CATEGORIES[t]["short"]} / 24H</div></div>'
+        for t in SECTION_ORDER
     )
     st.markdown(f'<div class="ww-board">{cells}</div>', unsafe_allow_html=True)
 
     # Keyword signals
-    kw_hits = [i for i in windowed if i.keyword_hits][:12]
-    eyebrow("KEYWORD SIGNALS", "watch: " + (", ".join(cfg["keywords"]) or "none set"))
-    st.markdown(render_rows(kw_hits), unsafe_allow_html=True)
+    kw_hits = [i for i in pool if i.keyword_hits and within_hours(i, window)][:10]
+    eyebrow("Keyword signals", "watch: " + (", ".join(cfg["keywords"]) or "none set"))
+    st.markdown(render_rows(kw_hits, window_h=window), unsafe_allow_html=True)
 
-    # Starred source sections, two columns, in the user's order
-    starred = [sid for sid in cfg["starred"] if sid in source_by_id(cfg)]
-    if not starred:
-        st.info("No sources starred yet — pick your favourites on the SOURCES & SETUP page.")
-    src_map = source_by_id(cfg)
+    # Category sections — min 5 entries each, backfilled + flagged beyond window
     cols = st.columns(2)
-    for n, sid in enumerate(starred):
+    for n, cat in enumerate(SECTION_ORDER):
+        cat_items = [i for i in pool if primary_tag(i) == cat]
+        in_win = [i for i in cat_items if within_hours(i, window)]
+        section = in_win[:8]
+        if len(section) < MIN_PER_SECTION:
+            older = [i for i in cat_items if i not in section]
+            section += older[: MIN_PER_SECTION - len(section)]
         with cols[n % 2]:
-            src = src_map[sid]
-            sub = status.get(sid, "—")
-            eyebrow(src["name"], sub if sub != "OK" else CATEGORIES[src["category"]]["label"])
-            block = [i for i in windowed if i.source_id == sid][:5]
-            st.markdown(render_rows(block, show_source=False), unsafe_allow_html=True)
+            eyebrow(CATEGORIES[cat]["label"],
+                    f"{len(in_win)} in window", TAG_COLORS[cat])
+            st.markdown(render_rows(section, window_h=window, show_class=False),
+                        unsafe_allow_html=True)
 
 elif page == "ALL ITEMS":
-    cat = st.radio("Class filter",
-                   ["ALL"] + list(CATEGORIES),
+    cat = st.radio("Class filter", ["ALL"] + SECTION_ORDER,
                    horizontal=True, label_visibility="collapsed",
                    format_func=lambda c: "ALL" if c == "ALL" else CATEGORIES[c]["short"])
     shown = windowed if cat == "ALL" else [i for i in windowed if primary_tag(i) == cat]
-    eyebrow("EVENT LOG", f"{len(shown)} items · newest first")
-    st.markdown(render_rows(shown[:120]), unsafe_allow_html=True)
+    eyebrow("Event log", f"{len(shown)} items · newest first")
+    st.markdown(render_rows(shown[:150], window_h=window), unsafe_allow_html=True)
 
 else:  # SOURCES & SETUP
-    eyebrow("FEED STATUS", f"{online}/{len(status)} online · cache 15 min")
+    eyebrow("Feed status", f"{online}/{len(status)} online · cache 15 min")
     rows = []
     for src in all_sources(cfg):
         s = status.get(src["id"], "—")
@@ -285,7 +307,7 @@ else:  # SOURCES & SETUP
                     f'<span class="stt">{esc(CATEGORIES[src["category"]]["short"])} · {esc(s)}</span></div>')
     st.markdown("".join(rows), unsafe_allow_html=True)
 
-    eyebrow("COMPOSE YOUR HIGHLIGHT PAGE", "selection order = display order")
+    eyebrow("Compose your highlight page", "these sources feed the highlights")
     src_map = source_by_id(cfg)
     starred_valid = [s for s in cfg["starred"] if s in src_map]
     picked = st.multiselect(
@@ -295,7 +317,7 @@ else:  # SOURCES & SETUP
         label_visibility="collapsed",
     )
 
-    eyebrow("KEYWORD WATCHLIST", "one per line — flags ▲ on highlights")
+    eyebrow("Keyword watchlist", "one per line — flags ▲ on highlights")
     kw_text = st.text_area("Keywords", value="\n".join(cfg["keywords"]),
                            height=120, label_visibility="collapsed")
 
@@ -306,14 +328,14 @@ else:  # SOURCES & SETUP
         st.success("Setup saved to ~/.windwatch/config.json")
         st.rerun()
 
-    eyebrow("ADD A CUSTOM FEED", "any RSS or Atom URL")
+    eyebrow("Add a custom feed", "any RSS or Atom URL")
     c1, c2, c3 = st.columns([2, 3, 1.4])
     with c1:
         new_name = st.text_input("Name", placeholder="e.g. Recharge — wind")
     with c2:
         new_url = st.text_input("Feed URL", placeholder="https://…/feed")
     with c3:
-        new_cat = st.selectbox("Class", list(CATEGORIES),
+        new_cat = st.selectbox("Class", SECTION_ORDER,
                                format_func=lambda c: CATEGORIES[c]["short"])
     if st.button("ADD FEED") and new_name.strip() and new_url.strip():
         sid = "custom_" + "".join(ch for ch in new_name.lower() if ch.isalnum())[:24]
@@ -330,7 +352,7 @@ else:  # SOURCES & SETUP
             st.rerun()
 
     if cfg["custom_sources"]:
-        eyebrow("REMOVE A CUSTOM FEED")
+        eyebrow("Remove a custom feed")
         rm = st.selectbox("Remove", ["—"] + [s["id"] for s in cfg["custom_sources"]],
                           format_func=lambda sid: "—" if sid == "—" else
                           next(s["name"] for s in cfg["custom_sources"] if s["id"] == sid),

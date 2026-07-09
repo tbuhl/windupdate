@@ -32,10 +32,17 @@ DEFAULT_CONFIG = {
     # Sources that appear on the Highlights page, in display order.
     "starred": [
         "offshorewind_biz",
+        "renews",
         "gnews_contracts",
+        "gnews_fid",
         "gnews_patents",
+        "patentscope_wind",
+        "wes_journal",
         "windtech_intl",
+        "gnews_tech",
         "gnews_auctions",
+        "windeurope",
+        "gnews_wind",
     ],
     # Keyword alerts — any hit gets flagged on Highlights.
     "keywords": ["Vestas", "Siemens Gamesa", "floating", "15 MW"],

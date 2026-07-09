@@ -104,7 +104,7 @@ DEFAULT_SOURCES = [
         "id": "wes_journal",
         "name": "Wind Energy Science (journal)",
         "url": "https://wes.copernicus.org/xml/rss2_0.xml",
-        "category": "tech",
+        "category": "papers",
         "note": "Peer-reviewed papers — EAWE / Copernicus.",
     },
     {
@@ -133,9 +133,10 @@ DEFAULT_SOURCES = [
 ]
 
 CATEGORIES = {
-    "news":      {"label": "Industry news",        "short": "NEWS"},
-    "contracts": {"label": "Contracts & orders",   "short": "CONTRACT"},
-    "patents":   {"label": "Patents & IP",         "short": "PATENT"},
-    "tech":      {"label": "Technology & research","short": "TECH"},
-    "markets":   {"label": "Markets & policy",     "short": "MARKET"},
+    "contracts": {"label": "Contracts awarded",         "short": "CONTRACT"},
+    "patents":   {"label": "Patents",                   "short": "PATENT"},
+    "papers":    {"label": "Recent scientific papers",  "short": "PAPER"},
+    "tech":      {"label": "Technology development",    "short": "TECH"},
+    "markets":   {"label": "Markets & policy",          "short": "MARKET"},
+    "news":      {"label": "Industry news",             "short": "NEWS"},
 }
