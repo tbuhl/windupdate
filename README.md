@@ -11,6 +11,14 @@ feeds, classifies every item, and lets you compose your own highlight page.
 
 ## Pages
 
+- **OEM ORDERS YTD** — year-to-date announced order intake per top OEM
+  (Vestas, Siemens Gamesa, GE Vernova, Nordex, Goldwind, Envision, Mingyang):
+  announcement count, parsed MW total, coverage window, and the full list per
+  OEM. Vestas is additionally scraped directly from
+  vestas.com/en/investor/announcements/wind-turbines-orders when reachable;
+  all OEMs fall back to Google News order queries. Partial-coverage flags show
+  when a feed does not reach back to January.
+
 - **HIGHLIGHTS** — your composed front page: 24 h signal board, keyword alerts
   (▲, orange rail), then your starred sources in the order you picked them.
 - **ALL ITEMS** — the full deduplicated event log, filterable by class

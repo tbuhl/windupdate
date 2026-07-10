@@ -217,7 +217,7 @@ st.markdown(CSS, unsafe_allow_html=True)
 
 with st.sidebar:
     st.markdown("**WINDWATCH**")
-    page = st.radio("Page", ["HIGHLIGHTS", "ALL ITEMS", "SOURCES & SETUP"],
+    page = st.radio("Page", ["HIGHLIGHTS", "ALL ITEMS", "OEM ORDERS YTD", "SOURCES & SETUP"],
                     label_visibility="collapsed")
     st.divider()
     window = st.selectbox("Time window", list(WINDOWS), index=0,
@@ -227,8 +227,11 @@ with st.sidebar:
         st.cache_data.clear()
         st.rerun()
 
-with st.spinner("Polling sources…"):
-    items, status = collect(cfg, cfg["keywords"])
+if page == "OEM ORDERS YTD":
+    items, status = [], {}
+else:
+    with st.spinner("Polling sources…"):
+        items, status = collect(cfg, cfg["keywords"])
 
 online = sum(1 for s in status.values() if s == "OK")
 if query.strip():
@@ -238,11 +241,14 @@ windowed = [i for i in items if within_hours(i, window)]
 
 # Masthead
 now = datetime.now(timezone.utc)
+sub = (f"OEM order intake · year-to-date {now.year}"
+       if page == "OEM ORDERS YTD" else
+       f"Daily operations brief · {online}/{len(status)} sources online · "
+       f"{len(windowed)} items in window")
 st.markdown(
     f'<div class="ww-mast">{ROTOR_SVG}<div>'
     f'<div class="ww-title">WIND<span>WATCH</span></div>'
-    f'<div class="ww-sub">Daily operations brief · {now:%a %d %b %Y · %H:%M} UTC · '
-    f'{online}/{len(status)} sources online · {len(windowed)} items in window</div>'
+    f'<div class="ww-sub">{now:%a %d %b %Y · %H:%M} UTC · {sub}</div>'
     f'</div></div>',
     unsafe_allow_html=True,
 )
@@ -295,6 +301,72 @@ elif page == "ALL ITEMS":
     shown = windowed if cat == "ALL" else [i for i in windowed if primary_tag(i) == cat]
     eyebrow("Event log", f"{len(shown)} items · newest first")
     st.markdown(render_rows(shown[:150], window_h=window), unsafe_allow_html=True)
+
+elif page == "OEM ORDERS YTD":
+    from oem import collect_oem_orders
+
+    with st.spinner("Polling OEM announcement streams…"):
+        data = collect_oem_orders()
+
+    total_mw = sum(d["mw_total"] for d in data.values())
+    total_n = sum(d["n"] for d in data.values())
+    ranked = sorted(data.items(), key=lambda kv: kv[1]["mw_total"], reverse=True)
+    max_mw = max((d["mw_total"] for d in data.values()), default=0) or 1
+
+    eyebrow("Announced order intake — top OEMs",
+            f"YTD {now.year} · {total_n} announcements · {total_mw:,.0f} MW identified")
+
+    # Horizontal bar board, one row per OEM
+    bars = []
+    for oem_name, d in ranked:
+        pct = 100 * d["mw_total"] / max_mw
+        cov = (f"since {d['earliest']:%d %b}" if d["earliest"] else "no dated items")
+        flag = "" if d["complete"] else ' <span class="ww-oldflag">Partial coverage</span>'
+        mw_lbl = f'{d["mw_total"]:,.0f} MW' if d["mw_total"] else "MW n/a"
+        bars.append(
+            f'<div class="ww-obar"><div class="hd"><span class="nm">{esc(oem_name)}</span>'
+            f'<span class="val" style="color:{d["color"]}">{mw_lbl}'
+            f' <span class="n">· {d["n"]} orders · {d["mw_known"]}/{d["n"]} with MW · {cov}{flag}</span></span></div>'
+            f'<div class="tr"><div class="fl" style="width:{pct:.1f}%;background:{d["color"]}"></div></div></div>'
+        )
+    st.markdown(
+        '<style>.ww-obar{margin:14px 0}.ww-obar .hd{display:flex;justify-content:space-between;'
+        'align-items:baseline;font-size:14px;font-weight:600;margin-bottom:5px}'
+        '.ww-obar .val{font-variant-numeric:tabular-nums}'
+        '.ww-obar .n{color:var(--dim);font-size:11px;font-weight:500;letter-spacing:.05em;text-transform:uppercase}'
+        '.ww-obar .tr{height:10px;background:var(--panel);border:1px solid var(--line)}'
+        '.ww-obar .fl{height:100%}</style>' + "".join(bars),
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        '<div class="ww-s" style="margin-top:10px">MW figures are parsed from announcement '
+        'headlines; orders quoted only in turbine counts are tallied but excluded from the MW sum. '
+        'News feeds have limited look-back — an OEM is marked <i>partial coverage</i> unless its '
+        'stream reaches back to mid-January. Vestas is additionally pulled directly from '
+        'vestas.com/…/wind-turbines-orders when reachable.</div>',
+        unsafe_allow_html=True,
+    )
+
+    # Per-OEM announcement lists
+    for oem_name, d in ranked:
+        with st.expander(f"{oem_name} — {d['n']} announcements  ·  feed: "
+                         + " / ".join(d["status"])):
+            if not d["orders"]:
+                st.markdown('<div class="ww-s">No order announcements found YTD — '
+                            'source may be offline.</div>', unsafe_allow_html=True)
+            rows = []
+            for o in d["orders"][:40]:
+                when = f'{o["time"]:%d %b}' if o["time"] else "—"
+                mw = f'{o["mw"]:,.0f} MW' if o["mw"] else "MW n/a"
+                rows.append(
+                    f'<div class="ww-row" style="--rc:{d["color"]}">'
+                    f'<div class="ww-t">{when}</div><div class="ww-b">'
+                    f'<div class="ww-h"><a href="{esc(o["link"])}" target="_blank">{esc(o["title"])}</a></div>'
+                    f'<div class="ww-m"><span class="ww-tag" style="--tc:{d["color"]}">{mw}</span></div>'
+                    f'</div></div>')
+            if rows:
+                st.markdown('<div class="ww-log">' + "".join(rows) + "</div>",
+                            unsafe_allow_html=True)
 
 else:  # SOURCES & SETUP
     eyebrow("Feed status", f"{online}/{len(status)} online · cache 15 min")
