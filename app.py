@@ -339,7 +339,10 @@ elif page == "OEM ORDERS YTD":
         unsafe_allow_html=True,
     )
     st.markdown(
-        '<div class="ww-s" style="margin-top:10px">MW figures are parsed from announcement '
+        '<div class="ww-s" style="margin-top:10px">Coverage of one order by multiple outlets is clustered '
+        'into a single record (matching MW figure within 45 days, or strongly overlapping '
+        'wording within 3 weeks) — the reports count shows how widely it was covered. '
+        'MW figures are parsed from announcement '
         'headlines; orders quoted only in turbine counts are tallied but excluded from the MW sum. '
         'News feeds have limited look-back — an OEM is marked <i>partial coverage</i> unless its '
         'stream reaches back to mid-January. Vestas is additionally pulled directly from '
@@ -358,6 +361,10 @@ elif page == "OEM ORDERS YTD":
             for o in d["orders"][:40]:
                 when = f'{o["time"]:%d %b}' if o["time"] else "—"
                 mw = f'{o["mw"]:,.0f} MW' if o["mw"] else "MW n/a"
+                rep = (f'<span style="color:var(--dim)">×{o["reports"]} reports</span>'
+                       if o["reports"] > 1 else "")
+                src = ('<span style="color:var(--dim)">vestas.com</span>'
+                       if o.get("direct") else "")
                 rows.append(
                     f'<div class="ww-row" style="--rc:{d["color"]}">'
                     f'<div class="ww-t">{when}</div><div class="ww-b">'

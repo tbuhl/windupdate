@@ -33,7 +33,7 @@ VESTAS_ORDERS_URL = "https://www.vestas.com/en/investor/announcements/wind-turbi
 OEMS = {
     "Vestas": {
         "direct": "vestas",
-        "feeds": [gnews('"Vestas" ("MW order" OR "firm order" OR "order intake")')],
+        "feeds": [gnews('"Vestas" ("MW order" OR "firm order")')],
         "color": "#FF6B1A",
     },
     "Siemens Gamesa": {
@@ -64,14 +64,18 @@ OEMS = {
 
 ORDER_RE = re.compile(
     r"\border(s|ed)?\b|firm order|conditional order|contract|supply agreement|"
-    r"preferred supplier|order intake|secures?\b|wins?\b", re.I)
+    r"preferred supplier|secures?\b|wins?\b|\bdeal\b|\bawards?\b|\bawarded\b|"
+    r"\blands?\b|\bbooks?\b|\bsigns?\b", re.I)
 
-# Things that look like orders but aren't turbine-supply intake
+# Things that look like orders but aren't single turbine-supply awards
 EXCLUDE_RE = re.compile(
     r"share buy-?back|annual report|interim (?:financial )?report|"
-    r"quarterly|capital markets day|AGM|remuneration", re.I)
+    r"quarterly|capital markets day|AGM|remuneration|"
+    r"order intake (?:of|reach|rose|fell|grew|hit|in|for)|"
+    r"\bQ[1-4]\s?20\d{2}|first quarter|second quarter|third quarter|fourth quarter|"
+    r"half[- ]year|first half|full[- ]year|order backlog|orders? in 20\d{2}", re.I)
 
-NUM_UNIT_RE = re.compile(r"(\d{1,3}(?:,\d{3})+|\d{1,4}(?:[.,]\d{1,3})?)\s*(GW|MW)\b", re.I)
+NUM_UNIT_RE = re.compile(r"(\d{1,3}(?:,\d{3})+|\d{1,4}(?:[.,]\d{1,3})?)[\s\u00A0-]*(GW|MW)\b", re.I)
 ORDER_CONTEXT_RE = re.compile(
     r"\b(order|orders|contract|deal|agreement|project|wind farm|park|intake)\b", re.I)
 TURBINE_RATING_RE = re.compile(r"MW\s*(?:wind\s*)?(turbine|platform|model|machine|prototype)s?\b", re.I)
@@ -164,6 +168,106 @@ def fetch_vestas_orders() -> tuple[list[dict], str]:
 
 
 # ---------------------------------------------------------------------------
+# Order-level clustering — many articles, one order
+# ---------------------------------------------------------------------------
+
+STOP = {
+    "with", "from", "that", "this", "will", "wind", "turbine", "turbines",
+    "order", "orders", "contract", "secures", "secure", "wins", "win",
+    "receives", "receive", "power", "energy", "farm", "project", "deal",
+    "firm", "supply", "supplies", "agreement", "megawatt", "gigawatt",
+    "announces", "announced", "lands", "signs", "signed", "awarded",
+    "large", "major", "another", "more", "first", "biggest",
+}
+
+COUNTRY_MAP = {
+    "usa": "us", "u.s.": "us", "united states": "us", "america": "us", "american": "us",
+    "germany": "de", "german": "de", "australia": "au", "australian": "au",
+    "india": "in", "indian": "in", "brazil": "br", "brazilian": "br",
+    "canada": "ca", "canadian": "ca", "spain": "es", "spanish": "es",
+    "sweden": "se", "swedish": "se", "finland": "fi", "finnish": "fi",
+    "poland": "pl", "polish": "pl", "turkey": "tr", "türkiye": "tr", "turkish": "tr",
+    "china": "cn", "chinese": "cn", "japan": "jp", "japanese": "jp",
+    "south africa": "za", "uk": "gb", "britain": "gb", "british": "gb",
+    "france": "fr", "french": "fr", "italy": "it", "italian": "it",
+    "greece": "gr", "greek": "gr", "netherlands": "nl", "dutch": "nl",
+    "denmark": "dk", "danish": "dk", "norway": "no", "norwegian": "no",
+    "vietnam": "vn", "taiwan": "tw", "south korea": "kr", "korean": "kr",
+    "argentina": "ar", "chile": "cl", "mexico": "mx", "colombia": "co",
+    "saudi arabia": "sa", "egypt": "eg", "morocco": "ma", "kazakhstan": "kz",
+    "uzbekistan": "uz", "philippines": "ph", "thailand": "th",
+}
+COUNTRY_RE = re.compile(r"\b(" + "|".join(re.escape(k) for k in COUNTRY_MAP) + r")\b", re.I)
+
+CLUSTER_MW_DAYS = 45      # same OEM + same MW within this window → same order
+CLUSTER_TXT_DAYS = 21     # reworded no-MW coverage window
+OVERLAP_MIN = 0.6      # |A∩B| / min(|A|,|B|)
+MIN_SHARED = 2         # guard against merging on a lone country token
+
+
+def _tokens(text: str, oem: str) -> set[str]:
+    oem_words = set(oem.lower().split())
+    return {w for w in re.findall(r"[a-zà-ÿ]{4,}", text.lower())
+            if w not in STOP and w not in oem_words}
+
+
+def _countries(text: str) -> set[str]:
+    return {COUNTRY_MAP[m.lower()] for m in COUNTRY_RE.findall(text)}
+
+
+def _same_mw(a: float, b: float) -> bool:
+    return abs(a - b) <= max(3.0, 0.02 * max(a, b))
+
+
+def cluster_orders(items: list[dict], oem: str) -> list[dict]:
+    """Group announcements about the same order. Input items need
+    title/link/summary/time/mw/direct. Returns one record per order."""
+    epoch = datetime(1970, 1, 1, tzinfo=timezone.utc)
+    items = sorted(items, key=lambda o: o["time"] or epoch)
+    clusters: list[dict] = []
+    for it in items:
+        blob = f'{it["title"]} {it.get("summary", "")}'
+        toks, ctry = _tokens(blob, oem), _countries(blob)
+        home = None
+        for c in clusters:
+            dt_days = (abs((it["time"] - c["time"]).days)
+                       if it["time"] and c["time"] else 9999)
+            # Rule 1: matching MW figures close in time (country conflict splits)
+            if (it["mw"] and c["mw"] and dt_days <= CLUSTER_MW_DAYS
+                    and _same_mw(it["mw"], c["mw"])
+                    and not (ctry and c["ctry"] and ctry.isdisjoint(c["ctry"]))):
+                home = c
+                break
+            # Rule 2: reworded coverage — token overlap close in time.
+            # Overlap coefficient handles short titles vs a grown cluster;
+            # MIN_SHARED stops merges on a lone shared token like a country.
+            shared = len(toks & c["toks"])
+            denom = min(len(toks), len(c["toks"])) or 1
+            if (dt_days <= CLUSTER_TXT_DAYS and shared >= MIN_SHARED
+                    and shared / denom >= OVERLAP_MIN
+                    and not (it["mw"] and c["mw"] and not _same_mw(it["mw"], c["mw"]))):
+                home = c
+                break
+        if home is None:
+            clusters.append({**it, "reports": 1, "toks": toks, "ctry": ctry})
+        else:
+            home["reports"] += 1
+            home["toks"] |= toks
+            home["ctry"] |= ctry
+            if home["mw"] is None:
+                home["mw"] = it["mw"]
+            # Prefer the OEM's own announcement as the representative
+            if it.get("direct") and not home.get("direct"):
+                home.update(title=it["title"], link=it["link"],
+                            time=it["time"] or home["time"], direct=True)
+    for c in clusters:
+        c.pop("toks", None)
+        c.pop("ctry", None)
+    clusters.sort(key=lambda o: o["time"] or epoch, reverse=True)
+    return clusters
+
+
+# ---------------------------------------------------------------------------
 # Aggregation
 # ---------------------------------------------------------------------------
 
@@ -173,7 +277,8 @@ def _norm(t: str) -> str:
 
 def collect_oem_orders() -> dict:
     """Returns {oem: {orders: [...], status: [...], n, mw_total, mw_known,
-                      earliest, latest}} for the current year."""
+                      earliest, latest}} for the current year. One record per
+                      order — multi-outlet coverage is clustered."""
     year = datetime.now(timezone.utc).year
     jan1 = datetime(year, 1, 1, tzinfo=timezone.utc)
     out = {}
@@ -181,17 +286,17 @@ def collect_oem_orders() -> dict:
         raw, statuses = [], []
         if spec.get("direct") == "vestas":
             e, s = fetch_vestas_orders()
-            raw += e
+            raw += [{**x, "direct": True} for x in e]
             statuses.append(f"vestas.com: {s}")
         for url in spec["feeds"]:
             e, s = fetch_feed(url)
-            raw += e
+            raw += [{**x, "direct": False} for x in e]
             statuses.append(f"news: {s}")
 
-        seen, orders = set(), []
+        seen, candidates = set(), []
         for e in raw:
             key = _norm(e["title"])
-            if not key or key in seen:
+            if not key or key in seen:      # drop verbatim duplicates first
                 continue
             seen.add(key)
             blob = f'{e["title"]} {e.get("summary", "")}'
@@ -199,16 +304,17 @@ def collect_oem_orders() -> dict:
                 continue
             if e["time"] is not None and e["time"] < jan1:
                 continue
-            orders.append({**e, "mw": extract_mw(blob)})
+            candidates.append({**e, "mw": extract_mw(blob)})
 
-        epoch = datetime(1970, 1, 1, tzinfo=timezone.utc)
-        orders.sort(key=lambda o: o["time"] or epoch, reverse=True)
+        orders = cluster_orders(candidates, oem)
+
         dated = [o["time"] for o in orders if o["time"]]
         mw_vals = [o["mw"] for o in orders if o["mw"]]
         out[oem] = {
             "orders": orders,
             "status": statuses,
             "n": len(orders),
+            "n_reports": sum(o["reports"] for o in orders),
             "mw_total": sum(mw_vals),
             "mw_known": len(mw_vals),
             "earliest": min(dated) if dated else None,
